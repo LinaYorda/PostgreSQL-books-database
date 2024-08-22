@@ -102,5 +102,65 @@ FROM goodreads_may_view gmv
 GROUP BY author, primary_genre, format_type 
 ORDER BY average_rating DESC
 
-	
 
+
+-- ******************************************
+-- **  Reader Engagement Analysis **
+-- ****************************************** 	
+
+	
+   
+   
+WITH generic_table AS (
+    SELECT 
+        gmv.author, 
+        gmv.book_title, 
+        ROUND(AVG(CAST(gmv.average_rating AS NUMERIC)), 2) AS average_rating, 
+        ROUND(AVG(CAST(gmv.num_reviews AS NUMERIC)), 2) AS avg_reviews, 
+        gmv.format_type, 
+        gmv.primary_genre, 
+        pbv.score
+    FROM 
+        goodreads_may_view gmv 
+    LEFT JOIN 
+        popular_books_view pbv 
+    ON 
+        gmv.book_title = pbv.title
+    GROUP BY 
+        gmv.author, gmv.book_title, gmv.format_type, gmv.primary_genre, pbv.score
+), 
+summary_table AS (
+    SELECT 
+        primary_genre, 
+        ROUND(AVG(CAST(score AS NUMERIC)), 2) AS genre_avg_score, 
+        ROUND(AVG(CAST(average_rating AS NUMERIC)), 2) AS genre_avg_rating
+    FROM 
+        generic_table
+    GROUP BY 
+        primary_genre
+)
+SELECT
+    gt.author, 
+    gt.book_title, 
+    gt.primary_genre, 
+    gt.average_rating, 
+    st.genre_avg_rating, 
+    gt.score, 
+    st.genre_avg_score
+FROM 
+    generic_table gt
+JOIN 
+    summary_table st
+ON 
+    gt.primary_genre = st.primary_genre
+ORDER BY 
+    gt.average_rating DESC;
+
+
+
+	
+	
+	
+	
+	
+	
